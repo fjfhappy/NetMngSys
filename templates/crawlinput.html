@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block maincontent %}
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    网络信息
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <form role="form" method="get" action="/crawlnet/" onsubmit="return checkcrwalinput()">
+                                <div class="form-group">
+                                    <label>网络地址</label>
+                                    <input class="form-control" name="netaddress" id="netaddress">
+                                    <span style="color: #F00" id="netaddresserror"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label>子网掩码</label>
+                                    <input class="form-control" name="mask" id="mask">
+                                    <span style="color: #F00" id="maskerror"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label>网关地址</label>
+                                    <input class="form-control" name="gateaddress" id="gateaddress">
+                                    <span style="color: #F00" id="gateaddresserror"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label>团体名</label>
+                                    <input class="form-control" name="communityname" id="communityname">
+                                    <span style="color: #F00" id="communityerror"></span>
+                                </div>
+                                <button type="submit" class="btn btn-default">确定</button>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- /.row (nested) -->
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+
+    <script>
+        function checkcrwalinput() {
+            var ipreg =  /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/
+            var errorflag = 0
+            var netaddress = $("#netaddress").val()
+            if(ipreg.test(netaddress) == false){
+                $('#netaddresserror').text("网络地址输入错误！")
+                errorflag = 1
+            }
+            else{
+                $('#netaddresserror').text("")
+            }
+            var mask = $('#mask').val()
+            if(ipreg.test(mask) == false){
+                $('#maskerror').text("网络掩码输入错误！")
+                errorflag = 1
+            }
+            else{
+                $('#maskerror').text("")
+            }
+            var gate = $('#gateaddress').val()
+            if(ipreg.test(gate) == false){
+                $('#gateaddresserror').text("网关地址输入错误！")
+                errorflag = 1
+            }
+            else{
+                $('#gateaddresserror').text("")
+            }
+            var community = $('#communityname').val()
+            if(community.length == 0){
+                $('#communityerror').text("请输入团体名！")
+                errorflag = 1
+            }
+            else{
+                $('#communityerror').text("")
+            }
+            if(errorflag){
+                return false
+            }
+            else{
+                return true
+            }
+        }
+    </script>
+{% endblock %}

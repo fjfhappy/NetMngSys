@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block maincontent %}
+    <div class="col-lg-8">
+        <div class="panel panel-default">
+            <div class="panel-heading" id="test">
+                扫描网络：{{ netaddress }}
+            </div>
+            <div class="panel-body">
+                <h4 id="item"></h4>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var intervalID;
+        function refresh() {
+            $.getJSON('/datarefresh', function (ret) {
+                for (var i = 0; i < ret.length; i++) {
+                    if(/^CrawlOver/.test(ret[i])){
+                        $('#item').append("扫描结束，请点击左侧“设备列表”查看结果。");
+                        clearInterval(intervalID);
+                        break;
+                    }
+                    $('#item').append(ret[i] + "<br>")
+                };
+            });
+            $(document).scrollTop($(document).height() - $(window).height());
+        };
+        $(document).ready(function () {
+            intervalID = setInterval("refresh()", 1000)
+        });
+    </script>
+{% endblock %}
