@@ -1,2 +1,6 @@
 #Pycharm IDE
 /.idea/
+/*.sqlite3
+
+#python
+*.pyc
