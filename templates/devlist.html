@@ -4,20 +4,27 @@
 {% block maincontent %}
     <div class="col-lg-12">
         <div>
-            <form class="form-inline" role="form" method="get" action="/devsearch/" onsubmit="return checksearchinput()">
-                <div class="form-group col-lg-3">
+            <form class="form-inline" role="form" method="get" action="/devsearch/"
+                  onsubmit="return checksearchinput()">
+                <div class="form-group col-lg-2">
                     <div class="input-group">
                         <div class="input-group-addon">IP地址</div>
                         <input class="form-control" name="ipaddress" id="ipaddress">
                     </div>
                 </div>
-                <div class="form-group col-lg-3">
+                <div class="form-group col-lg-2">
                     <div class="input-group">
                         <div class="input-group-addon">MAC地址</div>
                         <input class="form-control" name="macaddress" id="macaddress">
                     </div>
                 </div>
-                <div class="form-group col-lg-3">
+                <div class="form-group col-lg-2">
+                    <div class="input-group">
+                        <div class="input-group-addon">上联IP</div>
+                        <input class="form-control" name="destip" id="destip">
+                    </div>
+                </div>
+                <div class="form-group col-lg-2">
                     <div class="input-group">
                         <div class="input-group-addon">设备名称</div>
                         <input class="form-control" name="devname" id="devname">
@@ -27,8 +34,9 @@
             </form>
         </div>
         <div class="row">
-            <span style="color: #F00" class="col-lg-3" id="ipaddresserror"></span>
-            <span style="color: #F00" class="col-lg-3" id="macaddresserror"></span>
+            <span style="color: #F00" class="col-lg-2" id="ipaddresserror"></span>
+            <span style="color: #F00" class="col-lg-2" id="macaddresserror"></span>
+            <span style="color: #F00" class="col-lg-2" id="destiperror"></span>
         </div>
         <br>
 
@@ -54,8 +62,8 @@
                                     <th>设备名</th>
                                     <th>上联端口</th>
                                     <th>目的IP</th>
-                                    <th>目的端口</th>
-                                    <th>更新时间</th>
+                                    <th>CPU使用率</th>
+                                    <th>内存使用率</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -73,20 +81,23 @@
                     <div class="row">
                         <div class="col-sm-6">
                             <div class="dataTables_info" id="dataTables-example_info" role="status"
-                                 aria-live="polite">第{{ dev_page.start_index }}到{{ dev_page.end_index }}共{{ dev_page.paginator.count }}
+                                 aria-live="polite">
+                                第{{ dev_page.start_index }}到{{ dev_page.end_index }}共{{ dev_page.paginator.count }}
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <div class="dataTables_paginate paging_simple_numbers" id="dataTables-example_paginate">
                                 <ul class="pagination">
                                     {% if dev_page.has_previous %}
-                                    <li class="paginate_button previous" aria-controls="dataTables-example"
-                                        tabindex="0" id="dataTables-example_previous"><a href="?page={{ dev_page.previous_page_number }}">前一页</a></li>
+                                        <li class="paginate_button previous" aria-controls="dataTables-example"
+                                            tabindex="0" id="dataTables-example_previous"><a
+                                                href="?page={{ dev_page.previous_page_number }}">前一页</a></li>
                                     {% endif %}
                                     {% countpage dev_page.number dev_page.paginator.num_pages %}
                                     {% if dev_page.has_next %}
-                                    <li class="paginate_button next" aria-controls="dataTables-example" tabindex="0"
-                                        id="dataTables-example_next"><a href="?page={{ dev_page.next_page_number }}">下一页</a></li>
+                                        <li class="paginate_button next" aria-controls="dataTables-example" tabindex="0"
+                                            id="dataTables-example_next"><a
+                                                href="?page={{ dev_page.next_page_number }}">下一页</a></li>
                                     {% endif %}
                                 </ul>
                             </div>
@@ -102,25 +113,44 @@
 
 
     <script>
+        function trim(str) {
+            return str.replace(/(^s*)|(s*$)/g, "");
+        }
         function checksearchinput() {
             var ipreg = /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/
             var macreg = /^[0-9a-f]{1,4}:[0-9a-f]{1,4}:[0-9a-f]{1,4}$/
             var errorflag = 0
             var ipaddress = $("#ipaddress").val()
-            if (ipaddress.length > 0 && ipreg.test(ipaddress) == false) {
-                $('#ipaddresserror').text("IP地址输入错误！")
-                errorflag = 1
-            }
-            else {
-                $('#ipaddresserror').text("")
-            }
+            ipaddress = trim(ipaddress)
+            {#            if (ipaddress.length > 0 && ipreg.test(ipaddress) == false) {#}
+            {#                $('#ipaddresserror').text("IP地址输入错误！")#}
+            {#                errorflag = 1#}
+            {#            }#}
+            {#            else {#}
+            {#                $('#ipaddresserror').text("")#}
+            {#            }#}
             var macaddress = $('#macaddress').val()
-            if (macaddress.length > 0 && macreg.test(macaddress) == false) {
-                $('#macaddresserror').text("MAC地址输入错误！")
-                errorflag = 1
-            }
-            else {
-                $('#macaddresserror').text("")
+            macaddress = trim(macaddress)
+            {#            if (macaddress.length > 0 && macreg.test(macaddress) == false) {#}
+            {#                $('#macaddresserror').text("MAC地址输入错误！")#}
+            {#                errorflag = 1#}
+            {#            }#}
+            {#            else {#}
+            {#                $('#macaddresserror').text("")#}
+            {#            }#}
+            var destip = $("#destip").val()
+            destip = trim(destip)
+            {#            if (destip.length > 0 && ipreg.test(destip) == false) {#}
+            {#                $('#destiperror').text("IP地址输入错误！")#}
+            {#                errorflag = 1#}
+            {#            }#}
+            {#            else {#}
+            {#                $('#destiperror').text("")#}
+            {#            }#}
+            var devname = $("#devname").val()
+            devname = trim(devname)
+            if (ipaddress.length == 0 && macaddress.length == 0 && destip.length == 0 && devname.length == 0) {
+                return false
             }
             if (errorflag) {
                 return false

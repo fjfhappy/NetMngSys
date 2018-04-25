@@ -31,5 +31,6 @@ urlpatterns = [
     path('datarefresh/', NetMngviews.datarefresh, name='datarefresh'),
     path('nettopology/', NetMngviews.nettopology, name='nettopology'),
     path('SNMPtool/', NetMngviews.SNMPtool, name='SNMPtool'),
+    path('devdetail/', NetMngviews.devdetail, name='devdetail'),
     path('test/', NetMngviews.test, name="test")
 ] + static(settings.STATIC_URL, document_root = settings.STATIC_ROOT)
