@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block maincontent %}
+    <style type="text/css">
+        .myalert {
+            text-align: center;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            margin-top: 10px;
+
+            border: 1px solid transparent;
+            border-top-color: transparent;
+            border-right-color: transparent;
+            border-bottom-color: transparent;
+            border-left-color: transparent;
+            border-radius: 4px;
+        }
+
+        .myalert-info {
+            color: #31708f;
+            background-color: #d9edf7;
+            border-color: #bce8f1;
+        }
+
+        .myalert-danger {
+            color: #a94442;
+            background-color: #f2dede;
+            border-color: #ebccd1;
+        }
+    </style>
+    {% for i in responselist %}
+        <div class="row">
+            <div class="col-lg-12">
+                {% for j in i %}
+                    <div class="col-lg-2">
+                        {% if j.3 %}
+                            <div class="myalert myalert-info">
+                                <a href="/devdetail/?ipaddress={{ j.0 }}">{{ j.0 }}</a><br>{{ j.1 }}<br>{{ j.2 }}
+                            </div>
+                        {% else %}
+                            <div class="myalert myalert-danger">
+                                <a href="/devdetail/?ipaddress={{ j.0 }}">{{ j.0 }}</a><br>{{ j.1 }}<br>{{ j.2 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+
+{% endblock %}

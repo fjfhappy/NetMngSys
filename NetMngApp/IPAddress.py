@@ -73,7 +73,7 @@ class IPAddress:
 
 
 if __name__ == "__main__":
-    ip = IPAddress('172.16.70.0', "255.255.254.0")
+    ip = IPAddress('172.16.70.12', "255.255.254.0")
     print(ip.next())
     print(ip)
     print(ip.isoutrange())

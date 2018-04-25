@@ -68,7 +68,7 @@
                 检索结果
             </div>
             <div class="panel-body">
-                <p id="successcontent"></p>
+                <pre id="successcontent"></pre>
             </div>
         </div>
     </div>
@@ -79,7 +79,7 @@
                 检索失败
             </div>
             <div class="panel-body">
-                <p></p>
+                <pre id="errorcontent"></pre>
             </div>
         </div>
         <!-- /.col-lg-4 -->
@@ -140,8 +140,9 @@
                 $('#community').val(responsedic['community'])
                 $('#OID').val(responsedic['OID'])
                 $("input[name='getway'][value='" + responsedic['getway'] + "']").attr("checked", true);
-                if (responsedic['result'].lenght == 0) {
+                if (responsedic['success'] == false) {
                     $('#errorpanel').prop("hidden", false)
+                    $('#errorcontent').text(responsedic['result'])
                 }
                 else {
                     $('#successpanel').prop("hidden", false)

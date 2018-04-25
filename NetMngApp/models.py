@@ -31,6 +31,17 @@ class DevInfoVerbose(models.Model):
     destPort = models.CharField(max_length=32)
     destFlag = models.CharField(max_length=32, default="0")
 
+    def valuedic(self):
+        return {"updateTime": self.updateTime, "sysDescr": self.sysDescr, "errorInfo": self.errorInfo, "IP": self.IP,
+                "sysUptime": self.sysUptime, "sysContact": self.sysContact, "sysName": self.sysName,
+                "sysLocation": self.sysLocation, "hardwareVersion": self.hardwareVersion,
+                "softwareVersion": self.softwareVersion, "serialNumber": self.serialNumber, "CPUUsage": self.CPUUsage,
+                "CPUUsageUpper": self.CPUUsageUpper, "memoryUsage": self.memoryUsage,
+                "memoryUsageUpper": self.memoryUsageUpper, "memorySize": self.memorySize,
+                "CPUTemprature": self.CPUTemprature, "CPUTempratureUpper": self.CPUTempratureUpper,
+                "CPUTempratureLower": self.CPUTempratureLower, "ARPTable": self.ARPTable, "MAC": self.MAC,
+                "MACTable": self.MACTable, "UpLinkPort": self.UpLinkPort, "destIP": self.destIP,
+                "destPort": self.destPort, "destFlag": self.destFlag}
 
 class Netsets(models.Model):
     netaddress = models.CharField(max_length=16)

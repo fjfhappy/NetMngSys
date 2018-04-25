@@ -26,7 +26,8 @@ def SNMPv2GET(ip, port, community, oid):
     return (True, result)
 
 
-def SNMPv2WALK(ip, port, community, oid, walkflag):
+def SNMPv2WALK(ip, port, community, oid):
+    result = ""
     for (errorIndication,
          errorStatus,
          errorIndex,
@@ -35,9 +36,8 @@ def SNMPv2WALK(ip, port, community, oid, walkflag):
                               UdpTransportTarget((ip, port)),
                               ContextData(),
                               ObjectType(ObjectIdentity(oid)),
-                              lexicographicMode=walkflag):
+                              lexicographicMode=False):
 
-        result = ""
         if errorIndication:
             return (False, str(errorIndication))
             # print(errorIndication)
@@ -815,6 +815,5 @@ if __name__ == "__main__":
     # for key in infodic:
     #     print("'"+key+"', ", end="")
 
-    print(SNMPv2GET('172.16.10.253', 161, "FmmuAccount", '.1.3.6.1.2.1.1.1.0'))
-
+    print(SNMPv2WALK('172.16.10.3', 161, "FmmuAccount", '.1.3.6.1.2.1.1'))
     pass

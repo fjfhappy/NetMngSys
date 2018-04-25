@@ -69,9 +69,13 @@
                                 <tbody>
                                 {% for i in dev_list %}
                                     <tr>
-                                        {% for j in i %}
-                                            <td>{{ j }}</td>
-                                        {% endfor %}
+                                        <td><a href="/devdetail/?ipaddress={{ i.0 }}">{{ i.0 }}</a></td>
+                                        <td>{{ i.1 }}</td>
+                                        <td>{{ i.2 }}</td>
+                                        <td>{{ i.3 }}</td>
+                                        <td>{{ i.4 }}</td>
+                                        <td>{{ i.5 }}</td>
+                                        <td>{{ i.6 }}</td>
                                     </tr>
                                 {% endfor %}
                                 </tbody>

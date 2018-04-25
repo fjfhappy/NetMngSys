@@ -1,4 +1,110 @@
 {% extends 'base.html' %}
 
 {% block maincontent %}
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 class="page-header">{{ devdetaildic.IP }}</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    设备信息
+                </div>
+                <div class="panel-body">
+                    <dl class="dl-horizontal">
+                        <dt>系统名称</dt>
+                        <dd>{{ devdetaildic.sysName }}</dd>
+                    </dl>
+                    <dl>
+                        <dt>设备描述</dt>
+                        <dd>{{ devdetaildic.sysDescr }}</dd>
+                    </dl>
+                    <dl class="dl-horizontal">
+                        <dt>硬件版本</dt>
+                        <dd>{{ devdetaildic.hardwareVersion }}</dd>
+                        <dt>软件版本</dt>
+                        <dd>{{ devdetaildic.softwareVersion }}</dd>
+                        <dt>序列号</dt>
+                        <dd>{{ devdetaildic.serialNumber }}</dd>
+                        <dt>设备位置</dt>
+                        <dd>{{ devdetaildic.sysLocation }}</dd>
+                        <dt>联系人</dt>
+                        <dd>{{ devdetaildic.sysContact }}</dd>
+
+                    </dl>
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+        </div>
+        <div class="col-lg-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    网络信息
+                </div>
+                <div class="panel-body">
+                    <dl class="dl-horizontal">
+                        <dt>IP地址</dt>
+                        <dd>{{ devdetaildic.IP }}</dd>
+                        <dt>MAC地址</dt>
+                        <dd>{{ devdetaildic.MAC }}</dd>
+                        <dt>上联端口</dt>
+                        <dd>{{ devdetaildic.UpLinkPort }}</dd>
+                        <dt>上联目的地址</dt>
+                        <dd>{{ devdetaildic.destIP }}</dd>
+                        <dt>上联目的端口</dt>
+                        <dd>{{ devdetaildic.destPort }}{% if devdetaildic.destFlag != "1" %}（非直连，根据网关推测。）{% endif %}</dd>
+                    </dl>
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    运行状态
+                </div>
+                <div class="panel-body">
+                    <dl class="dl-horizontal">
+                        <dt>运行时间</dt>
+                        <dd>{{ devdetaildic.sysUptime }}</dd>
+                        <dt>CPU使用率</dt>
+                        <dd>{{ devdetaildic.CPUUsage }}（报警值：{{ devdetaildic.CPUUsageUpper }}）</dd>
+                        <dt>内存使用率</dt>
+                        <dd>{{ devdetaildic.memoryUsage }}（报警值：{{ devdetaildic.memoryUsageUpper }}）</dd>
+                        <dt>内存容量</dt>
+                        <dd>{{ devdetaildic.memorySize }}</dd>
+                        <dt>CPU温度</dt>
+                        <dd>{{ devdetaildic.CPUTemprature }}（正常范围：{{ devdetaildic.CPUTempratureLower }}-{{ devdetaildic.CPUTempratureUpper }}）</dd>
+                    </dl>
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+        </div>
+        <div class="col-lg-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    其他信息
+                </div>
+                <div class="panel-body">
+                    <dl class="dl-horizontal">
+                        <dt>更新时间</dt>
+                        <dd>{{ devdetaildic.updateTime }}</dd>
+                        <dt>错误信息</dt>
+                        <dd>{{ devdetaildic.errorInfo }}</dd>
+                    </dl>
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+        </div>
+    </div>
+
+
 {% endblock %}

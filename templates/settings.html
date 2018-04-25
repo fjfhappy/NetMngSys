@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block maincontent %}
+    <div class="col-lg-8">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                网络设备数量
+            </div>
+            <!-- /.panel-heading -->
+            <div class="panel-body">
+                <div id="dataTables-example_wrapper" class="dataTables_wrapper form-inline dt-bootstrap no-footer">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <table class="table table-striped table-bordered table-hover">
+                                <thead>
+                                <tr>
+                                    <th>网络地址</th>
+                                    <th>子网掩码</th>
+                                    <th>设备数量</th>
+                                    <th>操作</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for i in netsummary %}
+                                    <tr>
+                                        <td>{{ i.0 }}</td>
+                                        <td>{{ i.1 }}</td>
+                                        <td>{{ i.2 }}</td>
+                                        <td><a href="/deletnet/?netaddress={{ i.0 }}&mask={{ i.1 }}"
+                                               onclick="return confirmdel()">删除</a></td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.table-responsive -->
+            </div>
+            <!-- /.panel-body -->
+        </div>
+    </div>
+
+    <script>
+        function confirmdel() {
+            var msg = "该操作将删除本网段全部设备信息！"
+            if (confirm(msg) == true) {
+                return true
+            }
+            else {
+                return false
+            }
+        }
+        $(document).ready(function () {
+            $("th, td").addClass('text-center')
+        })
+    </script>
+{% endblock %}

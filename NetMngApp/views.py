@@ -8,48 +8,20 @@ import json
 from django.db.models import Q
 
 from NetMngApp.IPAddress import IPAddress
-from NetMngApp.pingTool import icmp_ping
+from NetMngApp.pingTool import icmp_ping, icmp_ping_delay
 from NetMngApp.SNMPTool import getHuaweiSWinfo, getRuijieSWinfo, getCiscoSWinfo, SNMPv2WALK, SNMPv2GET
 from NetMngApp.models import DevInfoVerbose, Netsets
 
+
 # Create your views here.
-
-testdata = [['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '1', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '2', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '3', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '4', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '5', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '6', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '7', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '8', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '9', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '10', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '11', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '12', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '13', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '14', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '15', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '16', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '17', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '18', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '19', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '20', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '21', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '22', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '23', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '24', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '25', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '26', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '27', '2.2.2.2', '23', '2009.12.12'],
-            ['1.1.1.1', '1a2b:3c4d:5e6f', 'YanjiushengNanlouHJ', '28', '2.2.2.2', '23', '2009.12.12']]
-
 
 def base(request):
     return render(request, 'base.html')
 
 
 def devlist(request):
-    alldevlist = list(DevInfoVerbose.objects.values_list('IP', 'MAC', 'sysName', 'UpLinkPort', 'destIP', 'CPUUsage', 'memoryUsage'))
+    alldevlist = list(
+        DevInfoVerbose.objects.values_list('IP', 'MAC', 'sysName', 'UpLinkPort', 'destIP', 'CPUUsage', 'memoryUsage'))
     paginator = Paginator(alldevlist, 15, 3)
     page = request.GET.get('page')
     if (page):
@@ -67,20 +39,22 @@ def devlist(request):
 
 searchdevlist = []
 searchtitle = "查询结果："
+
+
 def devsearch(request):
     global searchdevlist
     global searchtitle
     ipaddress = request.GET.get('ipaddress')
-    if(ipaddress):
+    if (ipaddress):
         ipaddress = ipaddress.strip()
     macaddress = request.GET.get('macaddress')
-    if(macaddress):
+    if (macaddress):
         macaddress = macaddress.strip()
     destip = request.GET.get('destip')
-    if(destip):
+    if (destip):
         destip = destip.strip()
     devname = request.GET.get('devname')
-    if(devname):
+    if (devname):
         devname = devname.strip()
     searchflag = 0
     if ipaddress or macaddress or devname or destip:
@@ -97,24 +71,28 @@ def devsearch(request):
 
     if (searchflag == 1):
         searchdevQuery = None
-        if(ipaddress):
+        if (ipaddress):
             searchdevQuery = DevInfoVerbose.objects.values_list('IP', 'MAC', 'sysName', 'UpLinkPort', 'destIP',
-                                                                'CPUUsage', 'memoryUsage').filter(IP__contains=ipaddress)
-        if(macaddress and searchdevQuery):
+                                                                'CPUUsage', 'memoryUsage').filter(
+                IP__contains=ipaddress)
+        if (macaddress and searchdevQuery):
             searchdevQuery = searchdevQuery.filter(MAC__icontains=macaddress)
-        elif(macaddress and not searchdevQuery):
+        elif (macaddress and not searchdevQuery):
             searchdevQuery = DevInfoVerbose.objects.values_list('IP', 'MAC', 'sysName', 'UpLinkPort', 'destIP',
-                                                                'CPUUsage', 'memoryUsage').filter(MAC__icontains=macaddress)
-        if(destip and searchdevQuery):
+                                                                'CPUUsage', 'memoryUsage').filter(
+                MAC__icontains=macaddress)
+        if (destip and searchdevQuery):
             searchdevQuery = searchdevQuery.filter(destIP__contains=destip)
-        elif(destip and not searchdevQuery):
+        elif (destip and not searchdevQuery):
             searchdevQuery = DevInfoVerbose.objects.values_list('IP', 'MAC', 'sysName', 'UpLinkPort', 'destIP',
-                                                                'CPUUsage', 'memoryUsage').filter(destIP__contains=destip)
-        if(devname and searchdevQuery):
+                                                                'CPUUsage', 'memoryUsage').filter(
+                destIP__contains=destip)
+        if (devname and searchdevQuery):
             searchdevQuery = searchdevQuery.filter(sysName__icontains=devname)
-        elif(devname and not searchdevQuery):
+        elif (devname and not searchdevQuery):
             searchdevQuery = DevInfoVerbose.objects.values_list('IP', 'MAC', 'sysName', 'UpLinkPort', 'destIP',
-                                                                'CPUUsage', 'memoryUsage').filter(sysName__icontains=devname)
+                                                                'CPUUsage', 'memoryUsage').filter(
+                sysName__icontains=devname)
         searchdevlist = list(searchdevQuery)
     paginator = Paginator(searchdevlist, 4, 3)
     page = request.GET.get('page')
@@ -230,6 +208,7 @@ def docrawl(netaddress, mask, gateaddress, community, devcrawlinfoqueue):
     del (resultslist)
 
     devcrawlinfoqueue.put("Sorting.")
+
     def cmp_fun(infodic):
         ipstrlist = infodic['IP'].split(".")
         ipintlist = []
@@ -239,6 +218,7 @@ def docrawl(netaddress, mask, gateaddress, community, devcrawlinfoqueue):
         for i in range(3, -1, -1):
             ipintnum += ipintlist[i] * (256 ** (3 - i))
         return ipintnum
+
     allresultlist.sort(key=cmp_fun)
 
     devcrawlinfoqueue.put("Coputing topology.")
@@ -286,16 +266,65 @@ def SNMPtool(request):
         return render(request, 'SNMPtool.html', {'responsedic': json.dumps(responsedic)})
     else:
         responsedic = request.GET.copy()
-        responsedic['result'] = 'GOOD BOY'
+        IPaddress = request.GET.get("IPaddress")
+        port = int(request.GET.get("port"))
+        community = request.GET.get("community")
+        OID = request.GET.get("OID")
+        getway = request.GET.get("getway")
+        (connceted, info) = icmp_ping(IPaddress, 2, 2)
+        if (not connceted):
+            responsedic['success'] = False
+            responsedic['result'] = info
+            return render(request, 'SNMPtool.html', {'responsedic': json.dumps(responsedic)})
+        elif (getway == "getself"):
+            (success, result) = SNMPv2GET(IPaddress, port, community, OID)
+            responsedic['success'] = success
+            responsedic['result'] = result
+            return render(request, 'SNMPtool.html', {'responsedic': json.dumps(responsedic)})
+        else:
+            (success, result) = SNMPv2WALK(IPaddress, port, community, OID)
+            responsedic['success'] = success
+            responsedic['result'] = result
         return render(request, 'SNMPtool.html', {'responsedic': json.dumps(responsedic)})
+
 
 def devdetail(request):
     ip = request.GET.get('ipaddress')
-    print(ip)
-    dev = DevInfoVerbose.objects.get(IP=ip)
-    print(dev.getattr("IP"))
-    print(type(dev))
-    return render(request, 'devdetail.html')
+    devdetaildic = DevInfoVerbose.objects.get(IP=ip).valuedic()
+    return render(request, 'devdetail.html', {"devdetaildic": devdetaildic})
+
+
+def devmonitor(request):
+    alldevlist = list(DevInfoVerbose.objects.values_list('IP', 'sysName'))
+    responselist = []
+    for i in range(len(alldevlist)):
+        if(i % 6 == 0):
+            responselist.append([])
+            j = int(i / 6)
+        (success, time) = icmp_ping_delay(alldevlist[i][0], 2, 2)
+        alldevlist[i] = list(alldevlist[i])
+        alldevlist[i].append(time)
+        alldevlist[i].append(success)
+        responselist[j].append(alldevlist[i])
+    return render(request, 'devmonitor.html', {"responselist": responselist})
+
+def settings(request):
+    netsummarylist = list(Netsets.objects.values_list('netaddress', 'netmask', 'ipcounts'))
+    return render(request, "settings.html", {'netsummary': netsummarylist})
+
+def deletnet(request):
+    netaddress = request.GET.get("netaddress")
+    mask = request.GET.get("mask")
+    Netsets.objects.filter(netaddress__contains=netaddress).delete()
+    Startnetaddress = IPAddress(netaddress, mask)
+    endnetaddress = Startnetaddress.broadcast
+    deviplist = list(DevInfoVerbose.objects.values_list('IP'))
+    for i in range(len(deviplist)):
+        if(Startnetaddress.lessthan(deviplist[i][0]) and IPAddress(deviplist[i][0], mask).lessthan(endnetaddress)):
+            DevInfoVerbose.objects.filter(IP__contains=deviplist[i][0]).delete()
+
+    netsummarylist = list(Netsets.objects.values_list('netaddress', 'netmask', 'ipcounts'))
+    return render(request, "settings.html", {'netsummary': netsummarylist})
 
 def test(request):
     return render(request, 'test.html')

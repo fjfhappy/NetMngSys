@@ -9,7 +9,7 @@ class ModelTest(TestCase):
     def test_get(self):
         dev = DevInfoVerbose.objects.get(IP="172.16.10.1")
         print("haha")
-        print(dev)
+        print(dev.saysomething())
 
 
     # def test_filter(self):
