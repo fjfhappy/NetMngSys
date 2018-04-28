@@ -166,18 +166,18 @@ def icmp_ping_delay(ip_addr, timeout = 2, count = 4):
         try:
             delay = ping_once(ip_addr, timeout)
         except socket.gaierror as e:
-            return (False, "SysError")
+            return (False, "failed. (socket error: '%s')" % e[1], "SockError")
             # print("failed. (socket error: '%s')" % e[1])
             break
 
         if delay == None:
-            return (False, "%d s"%timeout)
+            (flag, info, delaytime) = (False, "(timeout within %s second.)" % timeout, "%d s"%timeout)
             # print('failed. (timeout within %s second.)' % timeout)
         else:
-            return (True, '%0.4f ms' % (delay * 1000))
+            return (True, 'get reply in %0.4f ms' % (delay * 1000), '%0.4f ms' % (delay * 1000))
             # print('get reply in %0.4f ms' % (delay * 1000))
 
-    return (False, 'ping failed. (timeout within %s second.)' % timeout)
+    return (flag, info, delaytime)
 
 
 if __name__ == '__main__':

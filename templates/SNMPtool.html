@@ -132,6 +132,7 @@
         }
         $(document).ready(function () {
             var responsedic = {{ responsedic|safe }}
+
             $('#successpanel').prop("hidden", true)
             $('#errorpanel').prop("hidden", true)
             if (responsedic['IPaddress']) {

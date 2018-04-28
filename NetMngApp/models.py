@@ -23,13 +23,12 @@ class DevInfoVerbose(models.Model):
     CPUTemprature = models.CharField(max_length=32)
     CPUTempratureUpper = models.CharField(max_length=32)
     CPUTempratureLower = models.CharField(max_length=32)
-    ARPTable = models.CharField(max_length=2048)
     MAC = models.CharField(max_length=32)
-    MACTable = models.CharField(max_length=2048)
     UpLinkPort = models.CharField(max_length=32)
     destIP = models.CharField(max_length=32)
     destPort = models.CharField(max_length=32)
-    destFlag = models.CharField(max_length=32, default="0")
+    destFlag = models.IntegerField()
+    gateaddress = models.CharField(max_length=32)
 
     def valuedic(self):
         return {"updateTime": self.updateTime, "sysDescr": self.sysDescr, "errorInfo": self.errorInfo, "IP": self.IP,
@@ -39,14 +38,40 @@ class DevInfoVerbose(models.Model):
                 "CPUUsageUpper": self.CPUUsageUpper, "memoryUsage": self.memoryUsage,
                 "memoryUsageUpper": self.memoryUsageUpper, "memorySize": self.memorySize,
                 "CPUTemprature": self.CPUTemprature, "CPUTempratureUpper": self.CPUTempratureUpper,
-                "CPUTempratureLower": self.CPUTempratureLower, "ARPTable": self.ARPTable, "MAC": self.MAC,
-                "MACTable": self.MACTable, "UpLinkPort": self.UpLinkPort, "destIP": self.destIP,
+                "CPUTempratureLower": self.CPUTempratureLower, "MAC": self.MAC,
+                "UpLinkPort": self.UpLinkPort, "destIP": self.destIP,
                 "destPort": self.destPort, "destFlag": self.destFlag}
+
+
+class DevPingInfo(models.Model):
+    DEV = models.OneToOneField(DevInfoVerbose, on_delete=models.CASCADE)
+    connected = models.BooleanField()
+    delaytime = models.CharField(max_length=64)
+
+    def valuelist(self):
+        return [self.DEV.IP, self.DEV.sysName, self.delaytime]
+
+
+class DevARPMACTableInfo(models.Model):
+    DEV = models.OneToOneField(DevInfoVerbose, on_delete=models.CASCADE)
+    ARPTable = models.CharField(max_length=2048)
+    MACTable = models.CharField(max_length=2048)
+
+    def valuelist(self):
+        return [self.ARPTable, self.MACTable]
+
 
 class Netsets(models.Model):
     netaddress = models.CharField(max_length=16)
     netmask = models.CharField(max_length=16)
+    gateaddress = models.CharField(max_length=16)
+    community = models.CharField(max_length=256)
     ipcounts = models.IntegerField()
+
+
+class SysSettingInfo(models.Model):
+    settingitem = models.CharField(max_length=128)
+    settingvalue = models.CharField(max_length=32)
 
 
 if __name__ == "__main__":

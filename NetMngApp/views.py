@@ -5,20 +5,27 @@ import time
 import queue
 import threading
 import json
-from django.db.models import Q
+from django.contrib.auth.decorators import login_required
 
 from NetMngApp.IPAddress import IPAddress
 from NetMngApp.pingTool import icmp_ping, icmp_ping_delay
 from NetMngApp.SNMPTool import getHuaweiSWinfo, getRuijieSWinfo, getCiscoSWinfo, SNMPv2WALK, SNMPv2GET
-from NetMngApp.models import DevInfoVerbose, Netsets
+from NetMngApp.models import DevInfoVerbose, Netsets, DevPingInfo, DevARPMACTableInfo, SysSettingInfo
 
 
 # Create your views here.
 
+def debug_printdic(dic):
+    for key in dic:
+        print(key + "=" + str(dic[key]))
+
+
+@login_required
 def base(request):
     return render(request, 'base.html')
 
 
+@login_required
 def devlist(request):
     alldevlist = list(
         DevInfoVerbose.objects.values_list('IP', 'MAC', 'sysName', 'UpLinkPort', 'destIP', 'CPUUsage', 'memoryUsage'))
@@ -41,6 +48,7 @@ searchdevlist = []
 searchtitle = "查询结果："
 
 
+@login_required
 def devsearch(request):
     global searchdevlist
     global searchtitle
@@ -112,7 +120,8 @@ def devsearch(request):
 devcrawlinfoqueue = queue.Queue()
 
 
-def getdevinfothreadfun(ip, mask, gate, port, community, step, devsinfolist, crawlinfoqueue, timeout=2, pingcount=4):
+# destFlag: 0 ping success SNMP fial, 1 ping success topology success, 2 ping success topology fail, 3 gate
+def getdevinfothreadfun(ip, mask, gate, port, community, step, devsinfolist, crawlinfoqueue, timeout, pingcount):
     devinfodickeys = ['updateTime', 'sysDescr', 'errorInfo', 'IP', 'sysUptime', 'sysContact', 'sysName', 'sysLocation',
                       'hardwareVersion', 'softwareVersion', 'serialNumber', 'CPUUsage', 'CPUUsageUpper', 'memoryUsage',
                       'memoryUsageUpper', 'memorySize', 'CPUTemprature', 'CPUTempratureUpper', 'CPUTempratureLower',
@@ -125,7 +134,7 @@ def getdevinfothreadfun(ip, mask, gate, port, community, step, devsinfolist, cra
             break
 
         devinfodic = {}
-        (connceted, info) = icmp_ping(ip.ip, timeout, pingcount)
+        (connceted, info, delaytime) = icmp_ping_delay(ip.ip, timeout, pingcount)
         if (not connceted):
             # print(ip.ip + " " + info)
             crawlinfoqueue.put(ip.ip + " " + info)
@@ -133,6 +142,8 @@ def getdevinfothreadfun(ip, mask, gate, port, community, step, devsinfolist, cra
                 break
             continue
 
+        devinfodic['connected'] = connceted
+        devinfodic['delaytime'] = delaytime
         (success, sysDescr) = SNMPv2GET(ip.ip, port, community, '.1.3.6.1.2.1.1.1.0')
         # print(ip.ip + ":\n" + sysDescr)
         crawlinfoqueue.put(ip.ip + ":\n" + sysDescr)
@@ -142,7 +153,9 @@ def getdevinfothreadfun(ip, mask, gate, port, community, step, devsinfolist, cra
             devinfodic['errorInfo'] = sysDescr
             devinfodic['sysDescr'] = ""
             for i in range(4, len(devinfodickeys)):
-                devinfodic[i] = ""
+                devinfodic[devinfodickeys[i]] = ""
+            devinfodic['destIP'] = gate
+            devinfodic['destFlag'] = 0
             devsinfolist.append(devinfodic)
             if (not ip.next()):
                 break
@@ -160,12 +173,13 @@ def getdevinfothreadfun(ip, mask, gate, port, community, step, devsinfolist, cra
             devinfodic['IP'] = ip.ip
             devinfodic['errorInfo'] = ""
             for i in range(4, len(devinfodickeys)):
-                devinfodic[i] = ""
+                devinfodic[devinfodickeys[i]] = ""
             devsinfolist.append(devinfodic)
             if (not ip.next()):
                 break
             continue
-        devinfodic['destIP'] = "2.2.2.2"
+
+        devinfodic['destIP'] = ""
         devinfodic['destPort'] = ""
         devinfodic['destFlag'] = ""
 
@@ -174,6 +188,7 @@ def getdevinfothreadfun(ip, mask, gate, port, community, step, devsinfolist, cra
             break
 
 
+@login_required
 def crawlinput(request):
     return render(request, 'crawlinput.html')
 
@@ -188,14 +203,19 @@ def docrawl(netaddress, mask, gateaddress, community, devcrawlinfoqueue):
         step = int(ip.ipaddresscount / 4)
 
     devcrawlinfoqueue.put("Start crawling with %d threads" % threadsnum)
+    SNMPport = int(SysSettingInfo.objects.get(settingitem="SNMPport").settingvalue)
+    pingtimeout = int(SysSettingInfo.objects.get(settingitem="pingtimeout").settingvalue)
+    pingcount = int(SysSettingInfo.objects.get(settingitem="pingcount").settingvalue)
     resultslist = []
     threadslist = []
 
     for i in range(threadsnum):
         resultslist.append([])
+
+        print(ip.ip + " " + mask + " " + gateaddress + " " + str(step))
         threadslist.append(threading.Thread(target=getdevinfothreadfun, name="crawlthread %d" % i,
-                                            args=(ip.ip, mask, gateaddress, 161, community, step, resultslist[i],
-                                                  devcrawlinfoqueue)))
+                                            args=(ip.ip, mask, gateaddress, SNMPport, community, step, resultslist[i],
+                                                  devcrawlinfoqueue, pingtimeout, pingcount)))
         ip.walk(step)
         threadslist[i].start()
 
@@ -209,6 +229,7 @@ def docrawl(netaddress, mask, gateaddress, community, devcrawlinfoqueue):
 
     devcrawlinfoqueue.put("Sorting.")
 
+    # inner sorting function
     def cmp_fun(infodic):
         ipstrlist = infodic['IP'].split(".")
         ipintlist = []
@@ -220,34 +241,136 @@ def docrawl(netaddress, mask, gateaddress, community, devcrawlinfoqueue):
         return ipintnum
 
     allresultlist.sort(key=cmp_fun)
+    for dev in allresultlist:
+        dev['gateaddress'] = gateaddress
 
     devcrawlinfoqueue.put("Coputing topology.")
+    MAC2IPDic = {}
+    IP2MACTableDic = {}
+    IP2destIPDic = {}
+    IP2destPortDic = {}
+    IP2destFlagDic = {}
+    for i in range(len(allresultlist)):
+        MAC2IPDic[allresultlist[i]['MAC']] = allresultlist[i]['IP']
+        IP2MACTableDic[allresultlist[i]['IP']] = allresultlist[i]['MACTable']
+        IP2destIPDic[allresultlist[i]['IP']] = allresultlist[i]['destIP']
+        IP2destPortDic[allresultlist[i]['IP']] = allresultlist[i]['destPort']
+        IP2destFlagDic[allresultlist[i]['IP']] = allresultlist[i]['destFlag']
+    # print("############MAC2IPDic")
+    # debug_printdic(MAC2IPDic)
+    # print("##############IP2MACTableDic")
+    # debug_printdic(IP2MACTableDic)
+    # print("#############IP2destIPDic")
+    # debug_printdic(IP2destIPDic)
+    # print("################IP2destPortDic")
+    # debug_printdic(IP2destPortDic)
+    # print("#############IP2destFlagDic")
+    # debug_printdic(IP2destFlagDic)
+    # replace MAC with IP, delete unmatchable
+    for IP in IP2MACTableDic:
+        tempdic = {}
+        for port in IP2MACTableDic[IP]:
+            for MACAdd in IP2MACTableDic[IP][port]:
+                if MAC2IPDic.__contains__(MACAdd):
+                    if tempdic.__contains__(port):
+                        tempdic[port].append(MAC2IPDic[MACAdd])
+                    else:
+                        tempdic[port] = [MAC2IPDic[MACAdd]]
+        IP2MACTableDic[IP] = tempdic
+
+    # print("##############IP2MACTableDic after replace")
+    # debug_printdic(IP2MACTableDic)
+    # inner function: get sons
+    def getSons(infodic):
+        sonlist = []
+        for port in infodic:
+            for ip in infodic[port]:
+                sonlist.append(ip)
+        return sonlist
+
+    # remove grandsons
+    IP2SonDic = {}
+    for IP in IP2MACTableDic:
+        IP2SonDic[IP] = IP2MACTableDic[IP].copy()
+        for port in IP2MACTableDic[IP]:
+            for sonip in IP2MACTableDic[IP][port]:
+                grandsons = getSons(IP2MACTableDic[sonip])
+                for cmpip in IP2MACTableDic[IP][port]:
+                    if (cmpip != sonip and grandsons.__contains__(cmpip) and IP2SonDic[IP][port].__contains__(cmpip)):
+                        IP2SonDic[IP][port].remove(cmpip)
+            if (len(IP2SonDic[IP][port]) == 0):
+                del (IP2SonDic[IP][port])
+    del (IP2MACTableDic)
+    # print("##############IP2SonDic")
+    # debug_printdic(IP2SonDic)
+    # add uplink informations
+    for IP in IP2SonDic:
+        for port in IP2SonDic[IP]:
+            for sonip in IP2SonDic[IP][port]:
+                IP2destIPDic[sonip] = IP
+                IP2destPortDic[sonip] = port
+                IP2destFlagDic[sonip] = 1
+    for IP in IP2destFlagDic:
+        if (IP2destFlagDic[IP] == ""):
+            IP2destFlagDic[IP] = 2
+            IP2destIPDic[IP] = gateaddress
+    for dev in allresultlist:
+        if (dev['destFlag'] == 0):
+            # ping success SNMP fail, has processed in threadfunction
+            if (dev['IP'] == gateaddress):
+                dev['destFlag'] = 3
+            else:
+                pass
+        else:
+            dev['destIP'] = IP2destIPDic[dev['IP']]
+            dev['destPort'] = IP2destPortDic[dev['IP']]
+            dev['destFlag'] = IP2destFlagDic[dev['IP']]
 
     devcrawlinfoqueue.put("Storing.")
+    Netsets.objects.update_or_create(netaddress=ip.networkaddress,
+                                     defaults={'netaddress': ip.networkaddress, 'netmask': ip.mask,
+                                               'gateaddress': gateaddress,
+                                               "community": community, 'ipcounts': len(allresultlist)})
+
     for i in range(len(allresultlist)):
-        # p = DevInfoVerbose()
-        # for key in devinfodickeys:
-        #     setattr(p, key, allresultlist[i][key])
-        DevInfoVerbose.objects.update_or_create(IP=allresultlist[i]['IP'], defaults=allresultlist[i])
-        # p.save()
+        pinginfodic = {}
+        pinginfodic['connected'] = allresultlist[i]['connected']
+        del (allresultlist[i]['connected'])
+
+        pinginfodic['delaytime'] = allresultlist[i]['delaytime']
+        del (allresultlist[i]['delaytime'])
+        arpmactabledic = {}
+        arpmactabledic['ARPTable'] = allresultlist[i]['ARPTable']
+        del (allresultlist[i]['ARPTable'])
+        arpmactabledic['MACTable'] = allresultlist[i]['MACTable']
+        del (allresultlist[i]['MACTable'])
+
+        (dev, flag) = DevInfoVerbose.objects.update_or_create(IP=allresultlist[i]['IP'], defaults=allresultlist[i])
+        if (flag):
+            pinginfodic['DEV'] = dev
+            arpmactabledic['DEV'] = dev
+            DevPingInfo.objects.update_or_create(DEV__IP=allresultlist[i]['IP'], defaults=pinginfodic)
+            DevARPMACTableInfo.objects.update_or_create(DEV__IP=allresultlist[i]['IP'], defaults=arpmactabledic)
 
     devcrawlinfoqueue.put("CrawlOver")
 
 
+@login_required
 def crawlnet(request):
     global devcrawlinfoqueue
     netaddress = request.GET['netaddress']
     mask = request.GET['mask']
     gateaddress = request.GET['gateaddress']
     community = request.GET['communityname']
-    netinfo = IPAddress(netaddress, mask)
-    Netsets.objects.update_or_create(netaddress=netaddress,
-                                     defaults={'netaddress': netaddress, 'netmask': mask,
-                                               'ipcounts': netinfo.ipaddresscount})
+    # netinfo = IPAddress(netaddress, mask)
+    # Netsets.objects.update_or_create(netaddress=netaddress,
+    #                                  defaults={'netaddress': netaddress, 'netmask': mask, "community": community,
+    #                                            'ipcounts': netinfo.ipaddresscount})
     threading.Thread(target=docrawl, args=(netaddress, mask, gateaddress, community, devcrawlinfoqueue)).start()
     return render(request, 'crawlnet.html', {'netaddress': netaddress})
 
 
+@login_required
 def datarefresh(request):
     global devcrawlinfoqueue
     devinfolist = []
@@ -256,10 +379,48 @@ def datarefresh(request):
     return JsonResponse(devinfolist, safe=False)
 
 
+def DFS(Edgeslist, current):
+    for edge in Edgeslist:
+        if (edge[2] == True or edge[1] != current[0][0]):
+            continue
+        else:
+            edge[2] = True
+            son = [edge[0]]
+            current.append(son)
+            DFS(Edgeslist, son)
+
+
+def debug_printedgelist(edgeslist):
+    print("######EDGELISTS#########")
+    for edge in edgeslist:
+        print(edge[0][0], end="")
+        print("--------->" + edge[1] + "    " + str(edge[2]))
+
+
+@login_required
 def nettopology(request):
-    return render(request, 'nettopology.html')
+    netinfolist = list(Netsets.objects.values_list('netaddress', 'netmask', 'gateaddress'))
+    topologyretdic = {}
+    for netinfo in netinfolist:
+        devinfolist = list(
+            DevInfoVerbose.objects.values_list('IP', 'destIP', 'destFlag').filter(gateaddress__contains=netinfo[2]))
+        edgeslist = []
+        for devinfo in devinfolist:
+            node = (devinfo[0], devinfo[2])
+            edgeslist.append([node, devinfo[1], False])
+        del (devinfolist)
+        for edge in edgeslist:
+            if (edge[0][0] == netinfo[2]):
+                current = [edge[0]]
+                edge[2] = True
+                break
+        DFS(edgeslist, current)
+        topologyretdic[netinfo[0] + "(" + netinfo[1] + ")"] = current
+
+    return render(request, 'nettopology.html', {'topologyretdic': topologyretdic})
 
 
+@login_required
 def SNMPtool(request):
     responsedic = {}
     if (len(request.GET) == 0):
@@ -271,7 +432,9 @@ def SNMPtool(request):
         community = request.GET.get("community")
         OID = request.GET.get("OID")
         getway = request.GET.get("getway")
-        (connceted, info) = icmp_ping(IPaddress, 2, 2)
+        pingtimeout = int(SysSettingInfo.objects.get(settingitem="pingtimeout").settingvalue)
+        pingcount = int(SysSettingInfo.objects.get(settingitem="pingcount").settingvalue)
+        (connceted, info, time) = icmp_ping_delay(IPaddress, pingtimeout, pingcount)
         if (not connceted):
             responsedic['success'] = False
             responsedic['result'] = info
@@ -288,43 +451,67 @@ def SNMPtool(request):
         return render(request, 'SNMPtool.html', {'responsedic': json.dumps(responsedic)})
 
 
+@login_required
 def devdetail(request):
     ip = request.GET.get('ipaddress')
     devdetaildic = DevInfoVerbose.objects.get(IP=ip).valuedic()
     return render(request, 'devdetail.html', {"devdetaildic": devdetaildic})
 
 
+@login_required
 def devmonitor(request):
-    alldevlist = list(DevInfoVerbose.objects.values_list('IP', 'sysName'))
+    alldevpinginfolist = list(DevPingInfo.objects.all())
     responselist = []
-    for i in range(len(alldevlist)):
-        if(i % 6 == 0):
+    for i in range(len(alldevpinginfolist)):
+        if (i % 6 == 0):
             responselist.append([])
             j = int(i / 6)
-        (success, time) = icmp_ping_delay(alldevlist[i][0], 2, 2)
-        alldevlist[i] = list(alldevlist[i])
-        alldevlist[i].append(time)
-        alldevlist[i].append(success)
-        responselist[j].append(alldevlist[i])
+        responselist[j].append(
+            [alldevpinginfolist[i].DEV.IP, alldevpinginfolist[i].DEV.sysName, alldevpinginfolist[i].delaytime,
+             alldevpinginfolist[i].connected])
     return render(request, 'devmonitor.html', {"responselist": responselist})
 
-def settings(request):
-    netsummarylist = list(Netsets.objects.values_list('netaddress', 'netmask', 'ipcounts'))
-    return render(request, "settings.html", {'netsummary': netsummarylist})
 
+@login_required
+def settings(request):
+    if (len(request.GET) > 0):
+        pingrefresh = request.GET.get('pingrefresh')
+        pingtimeout = request.GET.get('pingtimeout')
+        pingcount = request.GET.get('pingcount')
+        SNMPport = request.GET.get('SNMPport')
+        SysSettingInfo.objects.update_or_create(settingitem="pingrefresh",
+                                                defaults={"settingitem": "pingrefresh",
+                                                          "settingvalue": pingrefresh})
+        SysSettingInfo.objects.update_or_create(settingitem="pingtimeout",
+                                                defaults={"settingitem": "pingtimeout",
+                                                          "settingvalue": pingtimeout})
+        SysSettingInfo.objects.update_or_create(settingitem="pingcount",
+                                                defaults={"settingitem": "pingcount",
+                                                          "settingvalue": pingcount})
+        SysSettingInfo.objects.update_or_create(settingitem="SNMPport",
+                                                defaults={"settingitem": "SNMPport",
+                                                          "settingvalue": SNMPport})
+    netsummarylist = list(Netsets.objects.values_list('netaddress', 'netmask', 'gateaddress', 'community', 'ipcounts'))
+    syssettinglist = list(SysSettingInfo.objects.values_list('settingitem', 'settingvalue'))
+    return render(request, "settings.html", {'netsummary': netsummarylist, 'syssettinglist': syssettinglist,
+                                             'syssettinglistJS': json.dumps(syssettinglist)})
+
+
+@login_required
 def deletnet(request):
     netaddress = request.GET.get("netaddress")
     mask = request.GET.get("mask")
     Netsets.objects.filter(netaddress__contains=netaddress).delete()
-    Startnetaddress = IPAddress(netaddress, mask)
-    endnetaddress = Startnetaddress.broadcast
+    NETAddress = IPAddress(netaddress, mask)
+
     deviplist = list(DevInfoVerbose.objects.values_list('IP'))
     for i in range(len(deviplist)):
-        if(Startnetaddress.lessthan(deviplist[i][0]) and IPAddress(deviplist[i][0], mask).lessthan(endnetaddress)):
+        if (NETAddress.hasip(deviplist[i][0], mask)):
             DevInfoVerbose.objects.filter(IP__contains=deviplist[i][0]).delete()
 
     netsummarylist = list(Netsets.objects.values_list('netaddress', 'netmask', 'ipcounts'))
     return render(request, "settings.html", {'netsummary': netsummarylist})
+
 
 def test(request):
     return render(request, 'test.html')

@@ -16,12 +16,8 @@
                     <dl class="dl-horizontal">
                         <dt>系统名称</dt>
                         <dd>{{ devdetaildic.sysName }}</dd>
-                    </dl>
-                    <dl>
                         <dt>设备描述</dt>
                         <dd>{{ devdetaildic.sysDescr }}</dd>
-                    </dl>
-                    <dl class="dl-horizontal">
                         <dt>硬件版本</dt>
                         <dd>{{ devdetaildic.hardwareVersion }}</dd>
                         <dt>软件版本</dt>
@@ -55,7 +51,8 @@
                         <dt>上联目的地址</dt>
                         <dd>{{ devdetaildic.destIP }}</dd>
                         <dt>上联目的端口</dt>
-                        <dd>{{ devdetaildic.destPort }}{% if devdetaildic.destFlag != "1" %}（非直连，根据网关推测。）{% endif %}</dd>
+                        <dd>{{ devdetaildic.destPort }}{% if devdetaildic.destFlag == 0 %}
+                            （SNMP获取失败，推测连至网关）{% elif devdetaildic.destFlag == 2 %}（计算信息不足，推测连至网关）{% endif %}</dd>
                     </dl>
                 </div>
                 <!-- /.panel-body -->

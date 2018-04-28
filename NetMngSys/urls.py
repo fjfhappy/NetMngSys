@@ -15,14 +15,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.conf.urls import url, include
 from django.conf.urls.static import static
 from django.conf import settings
 from NetMngApp import views as NetMngviews
 from UserMngApp import views as UserMngviews
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('login/', UserMngviews.login, name='login'),
+    path('login/', UserMngviews.dologin, name='login'),
+    path('logout/', UserMngviews.dologout, name='logout'),
+    path('startDemothreads', UserMngviews.startDemothreads, name='startDemothreads'),
     path('base/', NetMngviews.base, name='base'),
     path('devlist/', NetMngviews.devlist, name='devlist'),
     path('devsearch/', NetMngviews.devsearch, name='devsearch'),

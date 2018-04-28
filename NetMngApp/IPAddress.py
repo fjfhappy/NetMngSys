@@ -59,8 +59,7 @@ class IPAddress:
 
     def next(self):
         self.walk()
-        if (self.ip == self.gate):
-            self.walk()
+
         if (not self.lessthan(self.broadcast)):
             return None
         return self.ip
@@ -70,6 +69,12 @@ class IPAddress:
             return False
         else:
             return True
+
+    def hasip(self, ip, mask):
+        if(IPAddress(self.networkaddress, self.mask).lessthan(ip) and IPAddress(ip, mask).lessthan(self.broadcast)):
+            return True
+        else:
+            return False
 
 
 if __name__ == "__main__":

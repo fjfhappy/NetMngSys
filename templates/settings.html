@@ -16,6 +16,8 @@
                                 <tr>
                                     <th>网络地址</th>
                                     <th>子网掩码</th>
+                                    <th>网关地址</th>
+                                    <th>团体名</th>
                                     <th>设备数量</th>
                                     <th>操作</th>
                                 </tr>
@@ -26,6 +28,8 @@
                                         <td>{{ i.0 }}</td>
                                         <td>{{ i.1 }}</td>
                                         <td>{{ i.2 }}</td>
+                                        <td>{{ i.3 }}</td>
+                                        <td>{{ i.4 }}</td>
                                         <td><a href="/deletnet/?netaddress={{ i.0 }}&mask={{ i.1 }}"
                                                onclick="return confirmdel()">删除</a></td>
                                     </tr>
@@ -41,6 +45,61 @@
         </div>
     </div>
 
+
+
+    <div class="col-lg-12">
+        <div class="col-lg-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    系统设置
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <form role="form" method="get" action="#" onsubmit="return checksyssettinginput()">
+                                {% for settingitem in syssettinglist %}
+                                    {% if settingitem.0 == "pingrefresh" %}
+                                        <div class="form-group">
+                                            <label>ping周期（秒）</label>
+                                            <input class="form-control" name="pingrefresh" id="pingrefresh">
+                                            <span style="color: #F00" id="pingrefresherror"></span>
+                                        </div>
+                                    {% endif %}
+                                    {% if settingitem.0 == "pingtimeout" %}
+                                        <div class="form-group">
+                                            <label>ping超时（秒）</label>
+                                            <input class="form-control" name="pingtimeout" id="pingtimeout">
+                                            <span style="color: #F00" id="pingtimeouterror"></span>
+                                        </div>
+                                    {% endif %}
+                                    {% if settingitem.0 == "pingcount" %}
+                                        <div class="form-group">
+                                            <label>ping次数</label>
+                                            <input class="form-control" name="pingcount" id="pingcount">
+                                            <span style="color: #F00" id="pingcounterror"></span>
+                                        </div>
+                                    {% endif %}
+                                    {% if settingitem.0 == "SNMPport" %}
+                                        <div class="form-group">
+                                            <label>ping次数</label>
+                                            <input class="form-control" name="SNMPport" id="SNMPport">
+                                            <span style="color: #F00" id="SNMPporterror"></span>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                <button type="submit" class="btn btn-default">确定</button>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- /.row (nested) -->
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+        </div>
+    </div>
+
+
     <script>
         function confirmdel() {
             var msg = "该操作将删除本网段全部设备信息！"
@@ -51,8 +110,71 @@
                 return false
             }
         }
+        function checksyssettinginput() {
+            var errorflag = 0
+            var msg = "确定修改系统设置吗？"
+            var intreg = /^\d+$/
+            var pingrefresh = $("#pingrefresh").val()
+            if(intreg.test(pingrefresh) == false){
+                $('#pingrefresherror').text("输入错误！")
+                errorflag = 1
+            }
+            else{
+                $('#pingrefresherror').text("")
+            }
+            var pingtimeout = $("#pingtimeout").val()
+            if(intreg.test(pingtimeout) == false){
+                $('#pingtimeouterror').text("输入错误！")
+                errorflag = 1
+            }
+            else{
+                $('#pingtimeouterror').text("")
+            }
+            var pingcount = $("#pingcount").val()
+            if(intreg.test(pingcount) == false){
+                $('#pingcounterror').text("输入错误！")
+                errorflag = 1
+            }
+            else{
+                $('#pingcounterror').text("")
+            }
+            var SNMPport = $("#SNMPport").val()
+            if(intreg.test(SNMPport) == false){
+                $('#SNMPporterror').text("输入错误！")
+                errorflag = 1
+            }
+            else{
+                $('#SNMPporterror').text("")
+            }
+            if(errorflag){
+                return false
+            }
+            if (confirm(msg) == true) {
+                return true
+            }
+            else {
+                return false
+            }
+        }
         $(document).ready(function () {
             $("th, td").addClass('text-center')
+            var syssettingJS = {{ syssettinglistJS|safe }}
+
+            for (i in syssettingJS) {
+                if (syssettingJS[i][0] == "pingrefresh") {
+                    $("#pingrefresh").val(syssettingJS[i][1])
+                }
+                if (syssettingJS[i][0] == "pingtimeout") {
+                    $("#pingtimeout").val(syssettingJS[i][1])
+                }
+                if (syssettingJS[i][0] == "pingcount") {
+                    $("#pingcount").val(syssettingJS[i][1])
+                }
+                if (syssettingJS[i][0] == "SNMPport") {
+                    $("#SNMPport").val(syssettingJS[i][1])
+                }
+            }
         })
+
     </script>
 {% endblock %}
