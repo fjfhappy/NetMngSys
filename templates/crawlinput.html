@@ -45,6 +45,18 @@
     </div>
 
     <script>
+        function IP2INT(ipstr) {
+            ipstrlist = ipstr.split(".")
+            ipintlist = []
+            for(i in ipstrlist){
+                ipintlist[i] = parseInt(ipstrlist[i])
+            }
+            ipint = 0
+            for(i in ipintlist){
+                ipint = ipint + ipintlist[i] * Math.pow(256, (3-i))
+            }
+            return ipint
+        }
         function checkcrwalinput() {
             var ipreg =  /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/
             var errorflag = 0
@@ -80,12 +92,19 @@
             else{
                 $('#communityerror').text("")
             }
+
             if(errorflag){
                 return false
             }
-            else{
-                return true
+            var netaddressint = IP2INT(netaddress)
+            var maskint = IP2INT(mask)
+            var gateint = IP2INT(gate)
+            var ipcount = Math.pow(2, 32) - maskint
+            if(gateint <= netaddressint || gateint >= (netaddressint+ipcount-1)){
+                alert("网关地址不在本网段！")
+                return false
             }
+            return true
         }
     </script>
 {% endblock %}

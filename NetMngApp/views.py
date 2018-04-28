@@ -402,6 +402,7 @@ def nettopology(request):
     netinfolist = list(Netsets.objects.values_list('netaddress', 'netmask', 'gateaddress'))
     topologyretdic = {}
     for netinfo in netinfolist:
+
         devinfolist = list(
             DevInfoVerbose.objects.values_list('IP', 'destIP', 'destFlag').filter(gateaddress__contains=netinfo[2]))
         edgeslist = []

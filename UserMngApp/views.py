@@ -20,7 +20,6 @@ def dorecycleping():
             ip = dev.DEV.IP
             (connceted, info, delaytime) = icmp_ping_delay(ip, pingtimeout, pingcount)
             DevPingInfo.objects.update_or_create(DEV=dev.DEV, defaults={'DEV':dev.DEV, 'connected':connceted, 'delaytime':delaytime})
-        print(refreshtime)
         time.sleep(refreshtime)
 
 def startDemothreads(request):

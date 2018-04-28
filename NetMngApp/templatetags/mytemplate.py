@@ -43,5 +43,6 @@ def dodrawtree(treelist):
 @register.simple_tag
 def drawtree(treelist):
     global htmlstr
+    htmlstr = ""
     dodrawtree(treelist)
     return format_html(htmlstr)
