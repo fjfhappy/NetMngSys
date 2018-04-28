@@ -7,6 +7,8 @@ import threading
 import json
 from django.contrib.auth.decorators import login_required
 
+import xlwt
+
 from NetMngApp.IPAddress import IPAddress
 from NetMngApp.pingTool import icmp_ping, icmp_ping_delay
 from NetMngApp.SNMPTool import getHuaweiSWinfo, getRuijieSWinfo, getCiscoSWinfo, SNMPv2WALK, SNMPv2GET
@@ -480,6 +482,8 @@ def settings(request):
         pingtimeout = request.GET.get('pingtimeout')
         pingcount = request.GET.get('pingcount')
         SNMPport = request.GET.get('SNMPport')
+        devinforefresh = request.GET.get('devinforefresh')
+        reportdir = request.GET.get('reportdir')
         SysSettingInfo.objects.update_or_create(settingitem="pingrefresh",
                                                 defaults={"settingitem": "pingrefresh",
                                                           "settingvalue": pingrefresh})
@@ -492,6 +496,12 @@ def settings(request):
         SysSettingInfo.objects.update_or_create(settingitem="SNMPport",
                                                 defaults={"settingitem": "SNMPport",
                                                           "settingvalue": SNMPport})
+        SysSettingInfo.objects.update_or_create(settingitem="devinforefresh",
+                                                defaults={"settingitem": "devinforefresh",
+                                                          "settingvalue": devinforefresh})
+        SysSettingInfo.objects.update_or_create(settingitem="reportdir",
+                                                defaults={"settingitem": "reportdir",
+                                                          "settingvalue": reportdir})
     netsummarylist = list(Netsets.objects.values_list('netaddress', 'netmask', 'gateaddress', 'community', 'ipcounts'))
     syssettinglist = list(SysSettingInfo.objects.values_list('settingitem', 'settingvalue'))
     return render(request, "settings.html", {'netsummary': netsummarylist, 'syssettinglist': syssettinglist,
@@ -513,6 +523,24 @@ def deletnet(request):
     netsummarylist = list(Netsets.objects.values_list('netaddress', 'netmask', 'ipcounts'))
     return render(request, "settings.html", {'netsummary': netsummarylist})
 
+@login_required
+def generatereport(request):
+    file = str(SysSettingInfo.objects.get(settingitem="reportdir").settingvalue) + "\\report.xls"
+    reportbook = xlwt.Workbook()
+    reportsheet = reportbook.add_sheet('sheet 1')
+    devlist = list(DevInfoVerbose.objects.all().values())
+    fields = DevInfoVerbose._meta.fields
+    fieldslist = [f.name for f in fields]
+    for i in range(len(fieldslist)):
+        reportsheet.write(0, i, fieldslist[i])
+    row = 1
+    devinfolist = list(DevInfoVerbose.objects.all().values_list())
+    for dev in devinfolist:
+        for i in range(len(dev)):
+            reportsheet.write(row, i, dev[i])
+        row += 1
+    reportbook.save(file)
+    return JsonResponse([file], safe=False)
 
 def test(request):
     return render(request, 'test.html')

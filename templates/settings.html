@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block maincontent %}
+
     <div class="col-lg-8">
         <div class="panel panel-default">
             <div class="panel-heading">
@@ -86,6 +87,20 @@
                                             <span style="color: #F00" id="SNMPporterror"></span>
                                         </div>
                                     {% endif %}
+                                    {% if settingitem.0 == "devinforefresh" %}
+                                        <div class="form-group">
+                                            <label>更新时间（时）</label>
+                                            <input class="form-control" name="devinforefresh" id="devinforefresh">
+                                            <span style="color: #F00" id="devinforefresherror"></span>
+                                        </div>
+                                    {% endif %}
+                                    {% if settingitem.0 == "reportdir" %}
+                                        <div class="form-group">
+                                            <label>报表目录</label>
+                                            <input class="form-control" name="reportdir" id="reportdir">
+                                            <span style="color: #F00" id="reportdirerror"></span>
+                                        </div>
+                                    {% endif %}
                                 {% endfor %}
                                 <button type="submit" class="btn btn-default">确定</button>
                             </form>
@@ -97,10 +112,32 @@
             </div>
             <!-- /.panel -->
         </div>
+
+        <div class="col-lg-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    报表生成
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <button type="submit" class="btn btn-default" onclick="return generatereport()">生成新报表</button>
+                            <br>
+                            <div id="filepath" style="padding-top: 10px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
 
     <script>
+        function generatereport() {
+            $.getJSON('/generatereport', function (ret) {
+                $('#filepath').text("请查看文件："+ret[0])
+            });
+        }
         function confirmdel() {
             var msg = "该操作将删除本网段全部设备信息！"
             if (confirm(msg) == true) {
@@ -115,38 +152,47 @@
             var msg = "确定修改系统设置吗？"
             var intreg = /^\d+$/
             var pingrefresh = $("#pingrefresh").val()
-            if(intreg.test(pingrefresh) == false){
+            if (intreg.test(pingrefresh) == false) {
                 $('#pingrefresherror').text("输入错误！")
                 errorflag = 1
             }
-            else{
+            else {
                 $('#pingrefresherror').text("")
             }
             var pingtimeout = $("#pingtimeout").val()
-            if(intreg.test(pingtimeout) == false){
+            if (intreg.test(pingtimeout) == false) {
                 $('#pingtimeouterror').text("输入错误！")
                 errorflag = 1
             }
-            else{
+            else {
                 $('#pingtimeouterror').text("")
             }
             var pingcount = $("#pingcount").val()
-            if(intreg.test(pingcount) == false){
+            if (intreg.test(pingcount) == false) {
                 $('#pingcounterror').text("输入错误！")
                 errorflag = 1
             }
-            else{
+            else {
                 $('#pingcounterror').text("")
             }
             var SNMPport = $("#SNMPport").val()
-            if(intreg.test(SNMPport) == false){
+            if (intreg.test(SNMPport) == false) {
                 $('#SNMPporterror').text("输入错误！")
                 errorflag = 1
             }
-            else{
+            else {
                 $('#SNMPporterror').text("")
             }
-            if(errorflag){
+            var devinforefresh = $("#devinforefresh").val()
+            if (intreg.test(devinforefresh) == false || parseInt(devinforefresh) > 23 || parseInt(devinforefresh) < 0) {
+                $('#devinforefresherror').text("输入错误！")
+                errorflag = 1
+            }
+            else {
+                $('#devinforefresherror').text("")
+            }
+
+            if (errorflag) {
                 return false
             }
             if (confirm(msg) == true) {
@@ -158,7 +204,8 @@
         }
         $(document).ready(function () {
             $("th, td").addClass('text-center')
-            var syssettingJS = {{ syssettinglistJS|safe }}
+            var syssettingJS =
+            {{ syssettinglistJS|safe }}
 
             for (i in syssettingJS) {
                 if (syssettingJS[i][0] == "pingrefresh") {
@@ -172,6 +219,13 @@
                 }
                 if (syssettingJS[i][0] == "SNMPport") {
                     $("#SNMPport").val(syssettingJS[i][1])
+                }
+                if (syssettingJS[i][0] == "devinforefresh") {
+                    $("#devinforefresh").val(syssettingJS[i][1])
+                }
+                if (syssettingJS[i][0] == "reportdir") {
+                    $("#reportdir").val(syssettingJS[i][1])
+                    $("#reportdir").attr("readOnly", true)
                 }
             }
         })

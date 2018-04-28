@@ -39,5 +39,6 @@ urlpatterns = [
     path('devmonitor/', NetMngviews.devmonitor, name='devmonitor'),
     path('settings/', NetMngviews.settings, name='settings'),
     path('deletnet/', NetMngviews.deletnet, name='deletnet'),
+    path('generatereport/', NetMngviews.generatereport, name='generatereport'),
     path('test/', NetMngviews.test, name="test")
 ] + static(settings.STATIC_URL, document_root = settings.STATIC_ROOT)

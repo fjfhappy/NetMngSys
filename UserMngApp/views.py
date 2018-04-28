@@ -10,17 +10,19 @@ from NetMngApp.pingTool import icmp_ping_delay
 
 democrated = False
 
+
 def dorecycleping():
-    refreshtime = int(SysSettingInfo.objects.get(settingitem="pingrefresh").settingvalue)
-    pingtimeout = int(SysSettingInfo.objects.get(settingitem="pingtimeout").settingvalue)
-    pingcount = int(SysSettingInfo.objects.get(settingitem="pingcount").settingvalue)
     while(True):
+        refreshtime = int(SysSettingInfo.objects.get(settingitem="pingrefresh").settingvalue)
+        pingtimeout = int(SysSettingInfo.objects.get(settingitem="pingtimeout").settingvalue)
+        pingcount = int(SysSettingInfo.objects.get(settingitem="pingcount").settingvalue)
         devs = DevPingInfo.objects.all()
         for dev in devs:
             ip = dev.DEV.IP
             (connceted, info, delaytime) = icmp_ping_delay(ip, pingtimeout, pingcount)
             DevPingInfo.objects.update_or_create(DEV=dev.DEV, defaults={'DEV':dev.DEV, 'connected':connceted, 'delaytime':delaytime})
         time.sleep(refreshtime)
+
 
 def startDemothreads(request):
     global democrated
@@ -44,6 +46,7 @@ def dologin(request):
             return render(request, 'login.html')
     else:
         return render(request, 'login.html')
+
 
 def dologout(request):
     logout(request)

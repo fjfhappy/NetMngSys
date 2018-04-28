@@ -25,7 +25,7 @@ SECRET_KEY = 'k04+sori7^=3*zf*7)*l@4)=jr+4a1^h3kihq47bf176or*o8#'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*',]
 
 ############################
 #super user: admin admin@123
