@@ -3,12 +3,13 @@ from django.http import HttpResponse
 from django.contrib.auth import authenticate, login, logout
 
 from NetMngApp.models import DevPingInfo, SysSettingInfo
-import time
+from NetMngApp.views import refreshdevverboseinfo
+import time, datetime
 import threading
 from NetMngApp.pingTool import icmp_ping_delay
 # Create your views here.
 
-democrated = False
+democreated = False
 
 
 def dorecycleping():
@@ -23,14 +24,39 @@ def dorecycleping():
             DevPingInfo.objects.update_or_create(DEV=dev.DEV, defaults={'DEV':dev.DEV, 'connected':connceted, 'delaytime':delaytime})
         time.sleep(refreshtime)
 
+def dorefreshdevverbose():
+    while(True):
+        refreshhour = int(SysSettingInfo.objects.get(settingitem="devinforefresh").settingvalue)
+        dnow = datetime.datetime.now()
+        nowstruct = time.localtime(time.time())
+        year = nowstruct[0]
+        month = nowstruct[1]
+        day = nowstruct[2]
+        hour = nowstruct[3]
+        if (hour < refreshhour):
+            drefresh = datetime.datetime(year, month, day, refreshhour, 0, 0)
+        else:
+            tommrow = datetime.date.today() + datetime.timedelta(days=1)
+            year = tommrow.year
+            month = tommrow.month
+            day = tommrow.day
+            drefresh = datetime.datetime(year, month, day, refreshhour, 0, 0)
+        sleepsecs = (drefresh - dnow).seconds
+        time.sleep(sleepsecs)
+        refreshdevverboseinfo()
+
 
 def startDemothreads(request):
-    global democrated
-    if(not democrated):
-        recyclepingthread = threading.Thread(target=dorecycleping())
+    global democreated
+
+    if(not democreated):
+        recyclepingthread = threading.Thread(target=dorecycleping)
         recyclepingthread.setDaemon(True)
         recyclepingthread.start()
-        democrated = True
+        refreshdevverboseinfothread = threading.Thread(target=dorefreshdevverbose)
+        refreshdevverboseinfothread.setDaemon(True)
+        refreshdevverboseinfothread.start()
+        democreated = True
     return HttpResponse()
 
 

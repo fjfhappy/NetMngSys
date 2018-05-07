@@ -82,7 +82,7 @@
                                     {% endif %}
                                     {% if settingitem.0 == "SNMPport" %}
                                         <div class="form-group">
-                                            <label>ping次数</label>
+                                            <label>SNMP端口</label>
                                             <input class="form-control" name="SNMPport" id="SNMPport">
                                             <span style="color: #F00" id="SNMPporterror"></span>
                                         </div>
@@ -92,13 +92,6 @@
                                             <label>更新时间（时）</label>
                                             <input class="form-control" name="devinforefresh" id="devinforefresh">
                                             <span style="color: #F00" id="devinforefresherror"></span>
-                                        </div>
-                                    {% endif %}
-                                    {% if settingitem.0 == "reportdir" %}
-                                        <div class="form-group">
-                                            <label>报表目录</label>
-                                            <input class="form-control" name="reportdir" id="reportdir">
-                                            <span style="color: #F00" id="reportdirerror"></span>
                                         </div>
                                     {% endif %}
                                 {% endfor %}
@@ -121,7 +114,10 @@
                 <div class="panel-body">
                     <div class="row">
                         <div class="col-lg-12">
-                            <button type="submit" class="btn btn-default" onclick="return generatereport()">生成新报表</button>
+                            <a href="/generatereport/">
+                                <button type="submit" class="btn btn-default">生成新报表
+                                </button>
+                            </a>
                             <br>
                             <div id="filepath" style="padding-top: 10px;"></div>
                         </div>
@@ -133,11 +129,6 @@
 
 
     <script>
-        function generatereport() {
-            $.getJSON('/generatereport', function (ret) {
-                $('#filepath').text("请查看文件："+ret[0])
-            });
-        }
         function confirmdel() {
             var msg = "该操作将删除本网段全部设备信息！"
             if (confirm(msg) == true) {
@@ -222,10 +213,6 @@
                 }
                 if (syssettingJS[i][0] == "devinforefresh") {
                     $("#devinforefresh").val(syssettingJS[i][1])
-                }
-                if (syssettingJS[i][0] == "reportdir") {
-                    $("#reportdir").val(syssettingJS[i][1])
-                    $("#reportdir").attr("readOnly", true)
                 }
             }
         })

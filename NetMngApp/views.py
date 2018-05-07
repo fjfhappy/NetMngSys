@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, FileResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import time
 import queue
@@ -214,7 +214,7 @@ def docrawl(netaddress, mask, gateaddress, community, devcrawlinfoqueue):
     for i in range(threadsnum):
         resultslist.append([])
 
-        print(ip.ip + " " + mask + " " + gateaddress + " " + str(step))
+        # print(ip.ip + " " + mask + " " + gateaddress + " " + str(step))
         threadslist.append(threading.Thread(target=getdevinfothreadfun, name="crawlthread %d" % i,
                                             args=(ip.ip, mask, gateaddress, SNMPport, community, step, resultslist[i],
                                                   devcrawlinfoqueue, pingtimeout, pingcount)))
@@ -483,7 +483,7 @@ def settings(request):
         pingcount = request.GET.get('pingcount')
         SNMPport = request.GET.get('SNMPport')
         devinforefresh = request.GET.get('devinforefresh')
-        reportdir = request.GET.get('reportdir')
+
         SysSettingInfo.objects.update_or_create(settingitem="pingrefresh",
                                                 defaults={"settingitem": "pingrefresh",
                                                           "settingvalue": pingrefresh})
@@ -499,9 +499,7 @@ def settings(request):
         SysSettingInfo.objects.update_or_create(settingitem="devinforefresh",
                                                 defaults={"settingitem": "devinforefresh",
                                                           "settingvalue": devinforefresh})
-        SysSettingInfo.objects.update_or_create(settingitem="reportdir",
-                                                defaults={"settingitem": "reportdir",
-                                                          "settingvalue": reportdir})
+
     netsummarylist = list(Netsets.objects.values_list('netaddress', 'netmask', 'gateaddress', 'community', 'ipcounts'))
     syssettinglist = list(SysSettingInfo.objects.values_list('settingitem', 'settingvalue'))
     return render(request, "settings.html", {'netsummary': netsummarylist, 'syssettinglist': syssettinglist,
@@ -525,10 +523,9 @@ def deletnet(request):
 
 @login_required
 def generatereport(request):
-    file = str(SysSettingInfo.objects.get(settingitem="reportdir").settingvalue) + "\\report.xls"
+    file = "report.xls"
     reportbook = xlwt.Workbook()
     reportsheet = reportbook.add_sheet('sheet 1')
-    devlist = list(DevInfoVerbose.objects.all().values())
     fields = DevInfoVerbose._meta.fields
     fieldslist = [f.name for f in fields]
     for i in range(len(fieldslist)):
@@ -540,7 +537,26 @@ def generatereport(request):
             reportsheet.write(row, i, dev[i])
         row += 1
     reportbook.save(file)
-    return JsonResponse([file], safe=False)
+
+    downloadfile = open(file, "rb")
+    response = FileResponse(downloadfile)
+    response['Content-Type'] = 'application/octect-stream'
+    response['Content-Disposition'] = 'attachment;filename="report.xls"'
+
+    return response
+
+
+def refreshdevverboseinfo():
+    global devcrawlinfoqueue
+    netsinfo = list(Netsets.objects.values())
+    for i in range(len(netsinfo)):
+        netaddress = netsinfo[i]['netaddress']
+        netmask = netsinfo[i]['netmask']
+        gateaddress = netsinfo[i]['gateaddress']
+        community = netsinfo[i]['community']
+        docrawl(netaddress, netmask, gateaddress, community, devcrawlinfoqueue)
+        devcrawlinfoqueue.queue.clear()
+
 
 def test(request):
     return render(request, 'test.html')

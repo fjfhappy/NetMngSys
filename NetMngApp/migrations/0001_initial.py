@@ -19,14 +19,9 @@ def forwards_func(apps, schema_editor):
     SysSettingInfo.objects.using(db_alias).update_or_create(settingitem="SNMPport",
                                                             defaults={"settingitem": "SNMPport",
                                                                       "settingvalue": "161"})
-
     SysSettingInfo.objects.using(db_alias).update_or_create(settingitem="devinforefresh",
                                                             defaults={"settingitem": "devinforefresh",
                                                                       "settingvalue": "1"})
-
-    SysSettingInfo.objects.using(db_alias).update_or_create(settingitem="reportdir",
-                                                            defaults={"settingitem": "reportdir",
-                                                                      "settingvalue": os.getcwd()})
 
     # SysSettingInfo.objects.using(db_alias).bulk_create([
     #     SysSettingInfo(settingitem = "pingrefresh", settingvalue = "30"),
